@@ -2055,12 +2055,16 @@
             } else if (obj.id === 17) {
                 // 圆环AOE - Donut
                 // outerRadius = 250, innerRadius = param2, 缩放 = scale / 50
+                // 游戏内分享的环形AOE颜色通常是白色，需要使用默认橙色
                 const outerRadius = 250;
                 const innerRadius = obj.param2;
                 const arcAngle = (obj.param1 / 180) * Math.PI;
                 const scale = obj.scale / 50;
 
-                const sectorCanvas = makeAnnulusSector(innerRadius, outerRadius, arcAngle, color);
+                // 如果颜色是白色(255,255,255)，使用默认橙色
+                const isWhite = obj.red === 255 && obj.green === 255 && obj.blue === 255;
+                const donutColor = isWhite ? 'rgba(255, 144, 0, 0.75)' : color;
+                const sectorCanvas = makeAnnulusSector(innerRadius, outerRadius, arcAngle, donutColor);
 
                 ctx.translate(obj.x, obj.y);
                 ctx.rotate(obj.angle);
