@@ -674,6 +674,7 @@
                 <h3>特殊对象</h3>
                 <button class="special-btn" data-tool="select">选择工具</button>
                 <button class="special-btn" data-tool="circle">圆形 AOE</button>
+                <button class="special-btn" data-tool="fan">扇形 AOE</button>
                 <button class="special-btn" data-tool="donut">圆环 AOE</button>
                 <button class="special-btn" data-tool="rect">矩形 AOE</button>
                 <button class="special-btn" data-tool="line">线条</button>
@@ -834,7 +835,7 @@
 
     <script>
         // ==================== API 配置 ====================
-        const STATIC_BASE = 'https://ff14.xin/static/board';  // 静态资源服务器
+        const STATIC_BASE = 'https://board.ff14.xin/static/board';  // 静态资源服务器
         const API_BASE = 'https://board.ff14.xin/api';  // 编解码 API
 
         // ==================== 缓存管理 ====================
@@ -1251,7 +1252,7 @@
                 });
                 // 自动切换到选择模式
                 switchToSelectTool();
-            } else if (['circle', 'donut', 'rect', 'line'].includes(state.currentTool)) {
+            } else if (['circle', 'fan', 'donut', 'rect', 'line'].includes(state.currentTool)) {
                 // 开始绘制
                 saveHistory();
                 state.isDrawing = true;
@@ -1478,7 +1479,7 @@
                     param1: 0, param2: 0, param3: 0
                 });
                 switchToSelectTool();
-            } else if (['circle', 'donut', 'rect', 'line'].includes(state.currentTool)) {
+            } else if (['circle', 'fan', 'donut', 'rect', 'line'].includes(state.currentTool)) {
                 saveHistory();
                 state.isDrawing = true;
                 state.drawStart = { x, y };
@@ -1569,12 +1570,41 @@
             ctx.fillStyle = 'rgba(255, 144, 0, 0.3)';
             ctx.lineWidth = 2;
 
-            if (state.currentTool === 'circle' || state.currentTool === 'donut') {
+            if (state.currentTool === 'circle') {
+                // 完整圆形AOE
                 const radius = Math.sqrt((x2-x1)**2 + (y2-y1)**2);
                 ctx.beginPath();
                 ctx.arc(x1, y1, radius, 0, Math.PI * 2);
                 ctx.fill();
                 ctx.stroke();
+            } else if (state.currentTool === 'fan') {
+                // 扇形AOE预览 - 默认90度扇形，从12点钟方向开始
+                const radius = Math.sqrt((x2-x1)**2 + (y2-y1)**2);
+                const direction = Math.atan2(y2 - y1, x2 - x1) + Math.PI / 2;
+                const arcAngle = Math.PI / 2;  // 90度
+                ctx.translate(x1, y1);
+                ctx.rotate(direction);
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.arc(0, 0, radius, -Math.PI/2, -Math.PI/2 + arcAngle);
+                ctx.closePath();
+                ctx.fill();
+                ctx.stroke();
+                ctx.setTransform(1, 0, 0, 1, 0, 0);  // 重置变换
+            } else if (state.currentTool === 'donut') {
+                // 圆环AOE预览 - 内半径为外半径的一半
+                const radius = Math.sqrt((x2-x1)**2 + (y2-y1)**2);
+                const innerRadius = radius / 2;
+                ctx.beginPath();
+                ctx.arc(x1, y1, radius, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.stroke();
+                // 内圆镂空
+                ctx.globalCompositeOperation = 'destination-out';
+                ctx.beginPath();
+                ctx.arc(x1, y1, innerRadius, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.globalCompositeOperation = 'source-over';
             } else if (state.currentTool === 'rect') {
                 const w = Math.abs(x2 - x1);
                 const h = Math.abs(y2 - y1);
@@ -1595,31 +1625,54 @@
             const dy = y2 - y1;
 
             if (state.currentTool === 'circle') {
+                // 完整圆形AOE - id=9, 缩放因子 1/100
+                // 显示半径 = img.width * (scale/100) / 2 = 512 * scale / 200 = scale * 2.56
+                // 所以 scale = radius / 2.56
                 const radius = Math.sqrt(dx*dx + dy*dy);
+                addObject({
+                    id: 9,
+                    x: Math.round(x1),
+                    y: Math.round(y1),
+                    scale: Math.max(1, Math.min(255, Math.round(radius / 2.56))),
+                    angle: 0,
+                    red: 255, green: 144, blue: 0,
+                    alpha: 0.75,
+                    param1: 0,
+                    param2: 0,
+                    param3: 0
+                });
+            } else if (state.currentTool === 'fan') {
+                // 扇形AOE - id=10
+                // 半径 = 256 * (scale / 50), 所以 scale = radius * 50 / 256
+                const radius = Math.sqrt(dx*dx + dy*dy);
+                const angle = Math.atan2(dy, dx) + Math.PI / 2;  // 调整角度使扇形指向鼠标方向
                 addObject({
                     id: 10,
                     x: Math.round(x1),
                     y: Math.round(y1),
-                    scale: Math.round(radius / 5),
-                    angle: 0,
+                    scale: Math.round(radius * 50 / 256),
+                    angle: angle,
                     red: 255, green: 144, blue: 0,
                     alpha: 0.75,
-                    param1: 360,
+                    param1: 90,   // 默认90度扇形
                     param2: 0,
                     param3: 0
                 });
             } else if (state.currentTool === 'donut') {
+                // 圆环AOE - id=17
+                // 半径 = 250 * (scale / 50), 所以 scale = radius * 50 / 250
+                // param2 是在 outerRadius=250 坐标系下的内半径值
                 const radius = Math.sqrt(dx*dx + dy*dy);
                 addObject({
                     id: 17,
                     x: Math.round(x1),
                     y: Math.round(y1),
-                    scale: Math.round(radius / 5),
+                    scale: Math.round(radius * 50 / 250),
                     angle: 0,
                     red: 255, green: 144, blue: 0,
                     alpha: 0.75,
                     param1: 360,
-                    param2: Math.round(radius / 2),
+                    param2: 125,  // 内半径 = 外半径的一半 (250 / 2)
                     param3: 0
                 });
             } else if (state.currentTool === 'rect') {
@@ -1685,10 +1738,17 @@
         }
 
         function getObjectSize(obj) {
-            if ([10, 17].includes(obj.id)) return obj.scale * 10;
+            if (obj.id === 9) {
+                // CircleAoE: scale / 100 * imageSize (约512)
+                return obj.scale * 5.12;
+            }
+            if (obj.id === 10 || obj.id === 17) {
+                // FanAoE/Donut: outerRadius(256/250) * 2 * (scale / 50)
+                return 256 * 2 * (obj.scale / 50);
+            }
             if (obj.id === 11) return Math.max(obj.param1, obj.param2) * 2;
-            if (obj.id === 100) return 50;
-            const factor = state.scaleFactor[obj.id] || 0.0015;
+            if (obj.id === 100) return 60;  // 文本 30px 字体
+            const factor = state.scaleFactor[obj.id] || (1/200);
             return obj.scale * factor * 200;
         }
 
@@ -1742,7 +1802,7 @@
             const aoeParams = document.getElementById('aoeParams');
             const textParams = document.getElementById('textParams');
 
-            if ([10, 11, 17].includes(obj.id)) {
+            if ([9, 10, 11, 17].includes(obj.id)) {
                 aoeParams.style.display = 'block';
                 textParams.style.display = 'none';
                 document.getElementById('propParam1').value = obj.param1;
@@ -1772,7 +1832,7 @@
             obj.blue = parseInt(color.substr(5, 2), 16);
             obj.alpha = parseInt(document.getElementById('propAlpha').value) / 100;
 
-            if ([10, 11, 17].includes(obj.id)) {
+            if ([9, 10, 11, 17].includes(obj.id)) {
                 obj.param1 = parseInt(document.getElementById('propParam1').value) || 0;
                 obj.param2 = parseInt(document.getElementById('propParam2').value) || 0;
             }
@@ -1795,7 +1855,8 @@
                 div.className = 'object-list-item' + (obj === state.selectedObject ? ' selected' : '');
 
                 let name = `#${idx + 1} `;
-                if (obj.id === 10) name += '圆形AOE';
+                if (obj.id === 9) name += '圆形AOE';
+                else if (obj.id === 10) name += '扇形AOE';
                 else if (obj.id === 11) name += '矩形AOE';
                 else if (obj.id === 12) name += '线条';
                 else if (obj.id === 17) name += '圆环AOE';
@@ -1874,74 +1935,185 @@
             }
         }
 
+        // 创建环形扇区 (与参考库 makeAnnulusSector 同步)
+        // image 参数：如果传入图片则用图片纹理，否则用颜色填充
+        function makeAnnulusSector(innerRadius, outerRadius, arcAngle, colorOrImage = 'rgba(255, 144, 0, 0.75)') {
+            const x = outerRadius;
+            const y = outerRadius;
+            const startAngle = -Math.PI / 2;
+            const endAngle = startAngle + arcAngle;
+
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = outerRadius * 2;
+            tempCanvas.height = outerRadius * 2;
+            const tempCtx = tempCanvas.getContext('2d');
+
+            // 绘制环形扇区路径
+            tempCtx.beginPath();
+            // 外弧
+            tempCtx.arc(x, y, outerRadius, startAngle, endAngle, false);
+            // 连接到内弧
+            tempCtx.lineTo(x + innerRadius * Math.cos(endAngle), y + innerRadius * Math.sin(endAngle));
+            // 内弧 (反向)
+            if (innerRadius > 0) {
+                tempCtx.arc(x, y, innerRadius, endAngle, startAngle, true);
+            }
+            // 连接回起点
+            tempCtx.lineTo(x + outerRadius * Math.cos(startAngle), y + outerRadius * Math.sin(startAngle));
+            tempCtx.closePath();
+
+            // 判断是图片还是颜色
+            if (colorOrImage instanceof HTMLImageElement) {
+                // 使用图片纹理 - 裁剪后绘制
+                tempCtx.clip();
+                tempCtx.drawImage(colorOrImage, 0, 0, outerRadius * 2, outerRadius * 2);
+            } else {
+                // 填充颜色
+                tempCtx.fillStyle = colorOrImage;
+                tempCtx.fill();
+            }
+
+            // 裁剪边缘以匹配游戏内效果
+            let leftEdge = 0, rightEdge = 0, bottomEdge = 0;
+
+            if (arcAngle < Math.PI * 1.5 && arcAngle >= Math.PI) {
+                leftEdge = (1 + Math.sin(arcAngle)) * outerRadius;
+            } else if (arcAngle < Math.PI) {
+                leftEdge = outerRadius;
+            }
+
+            if (arcAngle < Math.PI) {
+                if (arcAngle >= Math.PI * 0.5) {
+                    bottomEdge = (1 + Math.cos(arcAngle)) * outerRadius;
+                } else {
+                    bottomEdge = outerRadius + Math.cos(arcAngle) * (innerRadius || 0);
+                }
+            }
+
+            if (arcAngle < Math.PI * 0.5) {
+                rightEdge = (1 - Math.sin(arcAngle)) * outerRadius;
+            }
+
+            const croppedCanvas = document.createElement('canvas');
+            croppedCanvas.width = outerRadius * 2 - leftEdge - rightEdge;
+            croppedCanvas.height = outerRadius * 2 - bottomEdge;
+            const croppedCtx = croppedCanvas.getContext('2d');
+            croppedCtx.drawImage(tempCanvas, -leftEdge, 0);
+
+            return croppedCanvas;
+        }
+
         function drawObject(obj) {
             ctx.save();
 
             const alpha = obj.alpha;
             const color = `rgba(${obj.red}, ${obj.green}, ${obj.blue}, ${alpha})`;
 
-            if (obj.id === 10 || obj.id === 17) {
-                // 扇形/圆环 AOE
-                const outerRadius = obj.scale * 5;
-                const innerRadius = obj.id === 17 ? obj.param2 : 0;
+            // 处理翻转
+            const flipH = obj.flip_horizontal ? -1 : 1;
+            const flipV = obj.flip_vertical ? -1 : 1;
+
+            if (obj.id === 9) {
+                // 圆形AOE (完整圆) - CircleAoE, 缩放因子 1/100
+                const img = objectImages[9];
+                if (img) {
+                    const scale = obj.scale / 100;
+                    const w = img.width * scale;
+                    const h = img.height * scale;
+                    ctx.translate(obj.x, obj.y);
+                    ctx.rotate(obj.angle);
+                    ctx.scale(flipH, flipV);
+                    ctx.globalAlpha = alpha;
+                    ctx.drawImage(img, -w/2, -h/2, w, h);
+                } else {
+                    // 如果没有图片，用纯色圆形
+                    const radius = obj.scale * 5.12;
+                    ctx.translate(obj.x, obj.y);
+                    ctx.rotate(obj.angle);
+                    ctx.beginPath();
+                    ctx.arc(0, 0, radius, 0, Math.PI * 2);
+                    ctx.fillStyle = color;
+                    ctx.fill();
+                }
+            } else if (obj.id === 10) {
+                // 扇形AOE - FanAoE
+                // outerRadius = 256, 缩放 = scale / 50
+                // 使用 circle_aoe 图片 (objectImages[9]) 作为纹理
+                const outerRadius = 256;
+                const innerRadius = 0;
                 const arcAngle = (obj.param1 / 180) * Math.PI;
+                const scale = obj.scale / 50;
+
+                // 使用 objectImages[9] (circle_aoe) 作为纹理图片
+                const circleAoeImg = objectImages[9];
+                const sectorCanvas = makeAnnulusSector(innerRadius, outerRadius, arcAngle, circleAoeImg || color);
 
                 ctx.translate(obj.x, obj.y);
                 ctx.rotate(obj.angle);
+                ctx.scale(scale * flipH, scale * flipV);
+                ctx.drawImage(sectorCanvas, -sectorCanvas.width / 2, -sectorCanvas.height / 2);
+            } else if (obj.id === 17) {
+                // 圆环AOE - Donut
+                // outerRadius = 250, innerRadius = param2, 缩放 = scale / 50
+                const outerRadius = 250;
+                const innerRadius = obj.param2;
+                const arcAngle = (obj.param1 / 180) * Math.PI;
+                const scale = obj.scale / 50;
 
-                ctx.beginPath();
-                ctx.moveTo(0, 0);
-                ctx.arc(0, 0, outerRadius, -Math.PI/2, -Math.PI/2 + arcAngle);
-                ctx.closePath();
-                ctx.fillStyle = color;
-                ctx.fill();
+                const sectorCanvas = makeAnnulusSector(innerRadius, outerRadius, arcAngle, color);
 
-                if (innerRadius > 0) {
-                    ctx.globalCompositeOperation = 'destination-out';
-                    ctx.beginPath();
-                    ctx.arc(0, 0, innerRadius, 0, Math.PI * 2);
-                    ctx.fill();
-                    ctx.globalCompositeOperation = 'source-over';
-                }
+                ctx.translate(obj.x, obj.y);
+                ctx.rotate(obj.angle);
+                ctx.scale(scale * flipH, scale * flipV);
+                ctx.drawImage(sectorCanvas, -sectorCanvas.width / 2, -sectorCanvas.height / 2);
             } else if (obj.id === 11) {
-                // 矩形 AOE
+                // 矩形 AOE - LineAoE
                 const w = obj.param1 * 2;
                 const h = obj.param2 * 2;
 
                 ctx.translate(obj.x, obj.y);
                 ctx.rotate(obj.angle);
+                ctx.scale(flipH, flipV);
 
                 ctx.fillStyle = color;
                 ctx.fillRect(-w/2, -h/2, w, h);
             } else if (obj.id === 12) {
-                // 线条
-                const x2 = obj.param1 / 5120 * 1024;
-                const y2 = obj.param2 / 3840 * 768;
+                // 线条 - Line
+                const x2 = Math.round(obj.param1 / 5120 * 1024);
+                const y2 = Math.round(obj.param2 / 3840 * 768);
 
-                ctx.strokeStyle = color;
+                ctx.lineCap = 'round';
                 ctx.lineWidth = obj.param3 * 2 || 2;
+                ctx.strokeStyle = color;
                 ctx.beginPath();
                 ctx.moveTo(obj.x, obj.y);
                 ctx.lineTo(x2, y2);
                 ctx.stroke();
             } else if (obj.id === 100) {
-                // 文本
-                ctx.fillStyle = color;
-                ctx.font = '16px Microsoft YaHei';
+                // 文本 - Text (与参考库同步: 30px, 有描边和阴影)
+                ctx.font = '30px sans-serif';
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
+                ctx.lineWidth = 1.5;
+                ctx.shadowBlur = 3;
+                ctx.shadowColor = 'black';
+                ctx.fillStyle = `rgb(${obj.red} ${obj.green} ${obj.blue})`;
+                ctx.strokeStyle = 'rgb(0 0 0)';
+
+                ctx.strokeText(obj.string || '', obj.x, obj.y);
                 ctx.fillText(obj.string || '', obj.x, obj.y);
             } else {
-                // 图标
+                // 图标 - 使用图片
                 const img = objectImages[obj.id];
                 if (img) {
-                    const factor = state.scaleFactor[obj.id] || 0.0015;
+                    const factor = state.scaleFactor[obj.id] || (1/200);
                     const scale = obj.scale * factor;
                     const w = img.width * scale;
                     const h = img.height * scale;
 
                     ctx.translate(obj.x, obj.y);
                     ctx.rotate(obj.angle);
+                    ctx.scale(flipH, flipV);
                     ctx.globalAlpha = alpha;
                     ctx.drawImage(img, -w/2, -h/2, w, h);
                 }

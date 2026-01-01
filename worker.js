@@ -181,8 +181,8 @@ function parseStrategyBoardData(data) {
   // Section 1: 板名
   const section1Id = view.getUint16(pos, true); pos += 2;
   const nameLen = view.getUint16(pos, true); pos += 2;
-  const nameBytes = data.slice(pos, pos + nameLen - 1);
-  const boardName = new TextDecoder('utf-8').decode(nameBytes);
+  const nameBytes = data.slice(pos, pos + nameLen);
+  const boardName = new TextDecoder('utf-8').decode(nameBytes).replace(/\0+$/, '');
   pos += nameLen;
 
   // 对象列表
@@ -213,8 +213,8 @@ function parseStrategyBoardData(data) {
     if (objId === 100) {
       pos += 2; // unk
       const strLen = view.getUint16(pos, true); pos += 2;
-      const strBytes = data.slice(pos, pos + strLen - 1);
-      obj.string = new TextDecoder('utf-8').decode(strBytes);
+      const strBytes = data.slice(pos, pos + strLen);
+      obj.string = new TextDecoder('utf-8').decode(strBytes).replace(/\0+$/, '');
       pos += strLen;
     }
 
@@ -380,22 +380,37 @@ function buildStrategyBoardData(board) {
   const length2Pos = pos; pos += 2;        // length2 占位
   pos += 4;                                 // unk
 
-  // Section 1: 板名
+  // Section 1: 板名 (需要 4 字节对齐)
   view.setUint16(pos, 1, true); pos += 2;
-  const nameBytes = new TextEncoder().encode(board.board_name + '\0');
-  view.setUint16(pos, nameBytes.length, true); pos += 2;
-  data.set(nameBytes, pos); pos += nameBytes.length;
+  const cleanName = (board.board_name || '').replace(/\0+$/, '');
+  const nameBytes = new TextEncoder().encode(cleanName);
+  const namePaddedLen = Math.ceil((nameBytes.length + 1) / 4) * 4;
+  view.setUint16(pos, namePaddedLen, true); pos += 2;
+  data.set(nameBytes, pos);
+  for (let i = nameBytes.length; i < namePaddedLen; i++) {
+    data[pos + i] = 0;
+  }
+  pos += namePaddedLen;
 
   // 对象列表
   for (const obj of objects) {
     view.setUint16(pos, 2, true); pos += 2;
     view.setUint16(pos, obj.id, true); pos += 2;
 
-    if (obj.id === 100 && obj.string) {
-      view.setUint16(pos, 0, true); pos += 2;
-      const strBytes = new TextEncoder().encode(obj.string + '\0');
-      view.setUint16(pos, strBytes.length, true); pos += 2;
-      data.set(strBytes, pos); pos += strBytes.length;
+    if (obj.id === 100) {
+      view.setUint16(pos, 3, true); pos += 2;  // 必须是 3
+      // 去掉末尾的NULL，编码字符串（处理空字符串情况）
+      const cleanString = (obj.string || '').replace(/\0+$/, '');
+      const strBytes = new TextEncoder().encode(cleanString);
+      // 对齐到 4 字节边界（至少 1 个 NULL）
+      const paddedLen = Math.ceil((strBytes.length + 1) / 4) * 4;
+      view.setUint16(pos, paddedLen, true); pos += 2;
+      data.set(strBytes, pos);
+      // 剩余部分填充 NULL
+      for (let i = strBytes.length; i < paddedLen; i++) {
+        data[pos + i] = 0;
+      }
+      pos += paddedLen;
     }
   }
 
@@ -508,19 +523,19 @@ export default {
     const url = new URL(request.url);
 
     try {
-      // GET / - 健康检查
-      if (url.pathname === '/' && request.method === 'GET') {
+      // GET /api - 健康检查
+      if ((url.pathname === '/api' || url.pathname === '/api/') && request.method === 'GET') {
         return new Response(JSON.stringify({
           status: 'ok',
           service: 'FFXIV Strategy Board Encoder/Decoder',
-          endpoints: ['/decode', '/encode']
+          endpoints: ['/api/decode', '/api/encode']
         }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
       }
 
-      // POST /decode - 解码分享字符串
-      if (url.pathname === '/decode' && request.method === 'POST') {
+      // POST /api/decode - 解码分享字符串
+      if (url.pathname === '/api/decode' && request.method === 'POST') {
         const body = await request.json();
         const shareString = body.share_string;
 
@@ -537,8 +552,8 @@ export default {
         });
       }
 
-      // POST /encode - 编码战术板数据
-      if (url.pathname === '/encode' && request.method === 'POST') {
+      // POST /api/encode - 编码战术板数据
+      if (url.pathname === '/api/encode' && request.method === 'POST') {
         const body = await request.json();
 
         if (!body.board_name || !body.objects) {
