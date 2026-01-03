@@ -466,6 +466,122 @@
             height: 24px;
         }
 
+        /* ==================== 移动端抽屉面板 ==================== */
+        .mobile-drawer {
+            display: none;
+            position: fixed;
+            left: 0;
+            right: 0;
+            bottom: 60px;
+            max-height: 50vh;
+            background: #16213e;
+            border-top: 2px solid #e94560;
+            z-index: 999;
+            overflow-y: auto;
+            padding: 15px;
+            transform: translateY(100%);
+            transition: transform 0.3s ease;
+        }
+
+        .mobile-drawer.open {
+            transform: translateY(0);
+        }
+
+        .mobile-drawer-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #0f3460;
+        }
+
+        .mobile-drawer-header h3 {
+            color: #e94560;
+            font-size: 16px;
+            margin: 0;
+        }
+
+        .mobile-drawer-close {
+            background: none;
+            border: none;
+            color: #94a3b8;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 0;
+            line-height: 1;
+        }
+
+        .mobile-drawer-close:hover {
+            color: #e94560;
+        }
+
+        /* 移动端选中图标提示 */
+        .mobile-placement-hint {
+            display: none;
+            position: fixed;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #e94560;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 14px;
+            z-index: 1001;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        /* 移动端快捷工具栏 */
+        .mobile-quick-tools {
+            display: none;
+            position: fixed;
+            bottom: 60px;
+            left: 0;
+            right: 0;
+            background: #0d0d1a;
+            padding: 8px;
+            z-index: 998;
+            overflow-x: auto;
+            white-space: nowrap;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .mobile-quick-tools::-webkit-scrollbar {
+            display: none;
+        }
+
+        .mobile-quick-tool-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: #0f3460;
+            border: 2px solid transparent;
+            border-radius: 8px;
+            color: #eee;
+            padding: 10px 16px;
+            margin-right: 8px;
+            font-size: 13px;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .mobile-quick-tool-btn.active {
+            border-color: #e94560;
+            background: #1a1a2e;
+        }
+
+        .mobile-quick-tool-btn img {
+            width: 28px;
+            height: 28px;
+            margin-right: 6px;
+        }
+
         /* ==================== 响应式设计 ==================== */
         @media (max-width: 1024px) {
             .container {
@@ -507,84 +623,116 @@
                 display: block;
             }
 
-            .container {
-                padding-bottom: 70px;
-            }
-
-            /* 默认隐藏工具栏和属性面板 */
-            .toolbar, .properties {
-                display: none;
-                position: fixed;
-                top: 0;
-                left: 0;
-                right: 0;
-                bottom: 70px;
-                z-index: 999;
-                overflow-y: auto;
-                border: none;
-            }
-
-            .toolbar.mobile-visible,
-            .properties.mobile-visible {
+            .mobile-quick-tools {
                 display: block;
+            }
+
+            .mobile-drawer {
+                display: block;
+            }
+
+            .mobile-placement-hint.show {
+                display: block;
+            }
+
+            .container {
+                padding-bottom: 115px; /* 为底部导航和快捷工具栏留空间 */
+                flex-direction: column;
+                height: 100vh;
+                overflow: hidden;
+            }
+
+            /* 隐藏原有的工具栏和属性面板 */
+            .toolbar, .properties {
+                display: none !important;
             }
 
             /* 画布区域始终显示 */
             .canvas-area {
-                display: flex;
+                display: flex !important;
+                flex-direction: column;
                 padding: 8px;
+                flex: 1;
+                min-height: 0;
+                overflow: hidden;
             }
 
-            .canvas-area.mobile-hidden {
-                display: none;
+            .canvas-wrapper {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                flex: 1;
+                width: 100%;
+                min-height: 0;
+                overflow: hidden;
+            }
+
+            #canvas {
+                display: block;
+                border-radius: 8px;
             }
 
             .canvas-header {
-                flex-direction: column;
+                flex-direction: row;
                 gap: 10px;
-                align-items: flex-start;
+                align-items: center;
+                margin-bottom: 8px;
             }
 
             .canvas-header h1 {
-                font-size: 16px;
+                font-size: 14px;
+                flex: 1;
             }
 
             .header-buttons {
-                width: 100%;
+                display: none; /* 隐藏，功能已移到底部导航 */
             }
 
-            .header-buttons button {
-                flex: 1;
-                padding: 10px 8px;
-                font-size: 12px;
-            }
-
-            /* 工具栏网格调整 */
-            .object-grid {
+            /* 抽屉内的工具栏网格调整 */
+            .mobile-drawer .object-grid {
+                display: grid;
                 grid-template-columns: repeat(6, 1fr);
+                gap: 8px;
             }
 
-            .bg-grid {
+            .mobile-drawer .bg-grid {
+                display: grid;
                 grid-template-columns: repeat(6, 1fr);
+                gap: 8px;
+            }
+
+            .mobile-drawer .object-item {
+                width: 45px;
+                height: 45px;
+            }
+
+            .mobile-drawer .object-item img {
+                max-width: 35px;
+                max-height: 35px;
+            }
+
+            .mobile-drawer .bg-item {
+                width: 45px;
+                height: 34px;
             }
 
             /* 属性面板调整 */
-            .prop-row {
+            .mobile-drawer .prop-row {
                 flex-direction: row;
             }
 
-            .io-section textarea {
+            .mobile-drawer .io-section textarea {
                 height: 60px;
                 font-size: 10px;
             }
 
             /* 对象列表 */
-            .object-list {
+            .mobile-drawer .object-list {
                 max-height: 120px;
             }
 
-            /* 特殊按钮两列排列 */
-            .toolbar-section .special-btn {
+            /* 特殊按钮在抽屉内两列排列 */
+            .mobile-drawer .special-btn {
                 display: inline-block;
                 width: calc(50% - 4px);
                 margin-right: 4px;
@@ -593,7 +741,7 @@
                 font-size: 13px;
             }
 
-            .toolbar-section .special-btn:nth-child(2n) {
+            .mobile-drawer .special-btn:nth-child(2n) {
                 margin-right: 0;
             }
         }
@@ -803,27 +951,152 @@
         </svg>
     </a>
 
+    <!-- 移动端放置提示 -->
+    <div class="mobile-placement-hint" id="mobilePlacementHint">
+        点击画布放置图标
+    </div>
+
+    <!-- 移动端快捷工具栏 -->
+    <div class="mobile-quick-tools" id="mobileQuickTools">
+        <button class="mobile-quick-tool-btn active" data-tool="select" onclick="mobileSelectTool('select')">选择</button>
+        <button class="mobile-quick-tool-btn" data-tool="circle" onclick="mobileSelectTool('circle')">圆形</button>
+        <button class="mobile-quick-tool-btn" data-tool="fan" onclick="mobileSelectTool('fan')">扇形</button>
+        <button class="mobile-quick-tool-btn" data-tool="donut" onclick="mobileSelectTool('donut')">圆环</button>
+        <button class="mobile-quick-tool-btn" data-tool="rect" onclick="mobileSelectTool('rect')">矩形</button>
+        <button class="mobile-quick-tool-btn" data-tool="line" onclick="mobileSelectTool('line')">线条</button>
+        <button class="mobile-quick-tool-btn" data-tool="text" onclick="mobileSelectTool('text')">文本</button>
+    </div>
+
+    <!-- 移动端工具抽屉 -->
+    <div class="mobile-drawer" id="mobileToolDrawer">
+        <div class="mobile-drawer-header">
+            <h3>图标库</h3>
+            <button class="mobile-drawer-close" onclick="closeMobileDrawer('tool')">&times;</button>
+        </div>
+        <div class="toolbar-section">
+            <h3 style="color: #94a3b8; font-size: 13px; margin-bottom: 10px;">背景</h3>
+            <div class="bg-grid" id="mobileBgGrid"></div>
+        </div>
+        <div class="toolbar-section" style="margin-top: 15px;">
+            <h3 style="color: #94a3b8; font-size: 13px; margin-bottom: 10px;">图标 (点击选择，然后在画布上点击放置)</h3>
+            <div class="object-grid" id="mobileObjectGrid"></div>
+        </div>
+    </div>
+
+    <!-- 移动端属性抽屉 -->
+    <div class="mobile-drawer" id="mobilePropsDrawer">
+        <div class="mobile-drawer-header">
+            <h3>属性设置</h3>
+            <button class="mobile-drawer-close" onclick="closeMobileDrawer('props')">&times;</button>
+        </div>
+        <!-- 战术板名称 -->
+        <div class="prop-group">
+            <label>战术板名称</label>
+            <input type="text" id="mobileBoardName" value="我的战术板" placeholder="输入名称">
+        </div>
+
+        <!-- 选中对象属性 -->
+        <div id="mobileObjectProps" style="display: none;">
+            <div class="prop-row">
+                <div class="prop-group">
+                    <label>X 坐标</label>
+                    <input type="number" id="mobilePropX" min="0" max="1024">
+                </div>
+                <div class="prop-group">
+                    <label>Y 坐标</label>
+                    <input type="number" id="mobilePropY" min="0" max="768">
+                </div>
+            </div>
+
+            <div class="prop-row">
+                <div class="prop-group">
+                    <label>缩放</label>
+                    <input type="number" id="mobilePropScale" min="1" max="255" value="100">
+                </div>
+                <div class="prop-group">
+                    <label>旋转 (度)</label>
+                    <input type="number" id="mobilePropAngle" min="-180" max="180" value="0">
+                </div>
+            </div>
+
+            <div class="prop-group">
+                <label>颜色</label>
+                <div class="color-picker">
+                    <input type="color" id="mobilePropColor" value="#ff9000">
+                    <input type="range" id="mobilePropAlpha" min="0" max="100" value="75" style="flex:1">
+                    <span id="mobileAlphaValue">75%</span>
+                </div>
+            </div>
+
+            <!-- AOE 专用参数 -->
+            <div id="mobileAoeParams" style="display: none;">
+                <div class="prop-row">
+                    <div class="prop-group">
+                        <label>角度/宽度</label>
+                        <input type="number" id="mobilePropParam1" min="0" value="360">
+                    </div>
+                    <div class="prop-group">
+                        <label>内半径/高度</label>
+                        <input type="number" id="mobilePropParam2" min="0" value="0">
+                    </div>
+                </div>
+            </div>
+
+            <!-- 文本专用 -->
+            <div id="mobileTextParams" style="display: none;">
+                <div class="prop-group">
+                    <label>文本内容</label>
+                    <input type="text" id="mobilePropText" placeholder="输入文本">
+                </div>
+            </div>
+
+            <button class="delete-btn" onclick="deleteSelected()">删除选中对象</button>
+        </div>
+
+        <!-- 对象列表 -->
+        <div class="toolbar-section" style="margin-top: 20px;">
+            <h3 style="color: #94a3b8; font-size: 13px;">对象列表 (<span id="mobileObjectCount">0</span>)</h3>
+            <div class="object-list" id="mobileObjectList"></div>
+        </div>
+
+        <!-- 导入导出 -->
+        <div class="io-section">
+            <h3 style="color: #94a3b8; font-size: 13px; margin-bottom: 10px;">导入/导出</h3>
+            <textarea id="mobileShareString" placeholder="粘贴分享字符串导入，或点击导出生成..."></textarea>
+            <div class="io-buttons">
+                <button class="btn-import" onclick="mobileImportBoard()">导入</button>
+                <button class="btn-export" onclick="mobileExportBoard()">导出</button>
+            </div>
+        </div>
+    </div>
+
     <!-- 移动端底部导航 -->
     <nav class="mobile-nav">
         <div class="mobile-nav-buttons">
-            <button class="mobile-nav-btn" data-panel="toolbar" onclick="showMobilePanel('toolbar')">
+            <button class="mobile-nav-btn" data-panel="icons" onclick="toggleMobileDrawer('tool')">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <rect x="3" y="3" width="7" height="7"></rect>
                     <rect x="14" y="3" width="7" height="7"></rect>
                     <rect x="3" y="14" width="7" height="7"></rect>
                     <rect x="14" y="14" width="7" height="7"></rect>
                 </svg>
-                工具
+                图标
             </button>
-            <button class="mobile-nav-btn active" data-panel="canvas" onclick="showMobilePanel('canvas')">
+            <button class="mobile-nav-btn" onclick="undoLast()">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <rect x="3" y="3" width="18" height="18" rx="2"></rect>
-                    <circle cx="8.5" cy="8.5" r="1.5"></circle>
-                    <path d="M21 15l-5-5L5 21"></path>
+                    <path d="M3 7v6h6"></path>
+                    <path d="M21 17a9 9 0 00-9-9 9 9 0 00-6.36 2.64L3 13"></path>
                 </svg>
-                画布
+                撤销
             </button>
-            <button class="mobile-nav-btn" data-panel="properties" onclick="showMobilePanel('properties')">
+            <button class="mobile-nav-btn" onclick="clearCanvas()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="3 6 5 6 21 6"></polyline>
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                </svg>
+                清空
+            </button>
+            <button class="mobile-nav-btn" data-panel="props" onclick="toggleMobileDrawer('props')">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <circle cx="12" cy="12" r="3"></circle>
                     <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
@@ -884,43 +1157,343 @@
             });
         }
 
-        // ==================== 移动端面板切换 ====================
-        function showMobilePanel(panel) {
-            const toolbar = document.querySelector('.toolbar');
-            const canvasArea = document.querySelector('.canvas-area');
-            const properties = document.querySelector('.properties');
-            const buttons = document.querySelectorAll('.mobile-nav-btn');
+        // ==================== 移动端交互 ====================
+        let isMobile = window.innerWidth <= 768;
 
-            // 移除所有active状态
-            buttons.forEach(btn => btn.classList.remove('active'));
-            toolbar.classList.remove('mobile-visible');
-            properties.classList.remove('mobile-visible');
-            canvasArea.classList.remove('mobile-hidden');
+        // 切换抽屉面板
+        function toggleMobileDrawer(type) {
+            const toolDrawer = document.getElementById('mobileToolDrawer');
+            const propsDrawer = document.getElementById('mobilePropsDrawer');
 
-            // 根据选择显示对应面板
-            if (panel === 'toolbar') {
-                toolbar.classList.add('mobile-visible');
-                canvasArea.classList.add('mobile-hidden');
-            } else if (panel === 'properties') {
-                properties.classList.add('mobile-visible');
-                canvasArea.classList.add('mobile-hidden');
+            if (type === 'tool') {
+                propsDrawer.classList.remove('open');
+                toolDrawer.classList.toggle('open');
+            } else if (type === 'props') {
+                toolDrawer.classList.remove('open');
+                propsDrawer.classList.toggle('open');
             }
-            // canvas面板时什么都不需要加
-
-            // 激活对应按钮
-            document.querySelector(`.mobile-nav-btn[data-panel="${panel}"]`).classList.add('active');
         }
+
+        // 关闭抽屉面板
+        function closeMobileDrawer(type) {
+            if (type === 'tool') {
+                document.getElementById('mobileToolDrawer').classList.remove('open');
+            } else if (type === 'props') {
+                document.getElementById('mobilePropsDrawer').classList.remove('open');
+            }
+        }
+
+        // 移动端选择工具
+        function mobileSelectTool(tool) {
+            state.currentTool = tool;
+            state.selectedIconId = null;
+
+            // 更新快捷工具栏按钮状态
+            document.querySelectorAll('.mobile-quick-tool-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.tool === tool);
+            });
+
+            // 同时更新桌面版的按钮状态
+            document.querySelectorAll('.special-btn').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.object-item').forEach(el => el.classList.remove('selected'));
+            const desktopBtn = document.querySelector(`.special-btn[data-tool="${tool}"]`);
+            if (desktopBtn) desktopBtn.classList.add('active');
+
+            // 隐藏放置提示
+            hidePlacementHint();
+        }
+
+        // 移动端选择图标
+        function mobileSelectIcon(id) {
+            state.currentTool = 'icon';
+            state.selectedIconId = id;
+
+            // 更新快捷工具栏按钮状态（取消所有选中）
+            document.querySelectorAll('.mobile-quick-tool-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+
+            // 更新移动端图标选中状态
+            document.querySelectorAll('#mobileObjectGrid .object-item').forEach(el => {
+                el.classList.toggle('selected', parseInt(el.dataset.id) === id);
+            });
+
+            // 同时更新桌面版
+            document.querySelectorAll('.special-btn').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('#objectGrid .object-item').forEach(el => {
+                el.classList.toggle('selected', parseInt(el.dataset.id) === id);
+            });
+
+            // 关闭抽屉，显示放置提示
+            closeMobileDrawer('tool');
+            showPlacementHint();
+        }
+
+        // 显示放置提示
+        function showPlacementHint() {
+            if (isMobile) {
+                document.getElementById('mobilePlacementHint').classList.add('show');
+            }
+        }
+
+        // 隐藏放置提示
+        function hidePlacementHint() {
+            document.getElementById('mobilePlacementHint').classList.remove('show');
+        }
+
+        // 渲染移动端背景列表
+        function renderMobileBackgrounds(backgrounds) {
+            const grid = document.getElementById('mobileBgGrid');
+            if (!grid) return;
+            grid.innerHTML = '';
+            backgrounds.forEach(bg => {
+                const div = document.createElement('div');
+                div.className = 'bg-item' + (bg.id === state.background ? ' selected' : '');
+                div.innerHTML = `<img src="${STATIC_BASE}${bg.path}" alt="背景${bg.id}">`;
+                div.onclick = (e) => {
+                    state.background = bg.id;
+                    document.querySelectorAll('.bg-item').forEach(el => el.classList.remove('selected'));
+                    div.classList.add('selected');
+                    // 同步桌面版
+                    document.querySelectorAll('#bgGrid .bg-item').forEach((el, idx) => {
+                        el.classList.toggle('selected', idx === bg.id - 1);
+                    });
+                    loadBackground(bg.id);
+                };
+                grid.appendChild(div);
+            });
+        }
+
+        // 渲染移动端图标列表
+        function renderMobileObjects(objects) {
+            const grid = document.getElementById('mobileObjectGrid');
+            if (!grid) return;
+            grid.innerHTML = '';
+            objects.forEach(obj => {
+                const div = document.createElement('div');
+                div.className = 'object-item';
+                div.innerHTML = `<img src="${STATIC_BASE}${obj.path}" alt="${obj.id}" draggable="false">`;
+                div.dataset.id = obj.id;
+
+                // 点击选择图标
+                div.onclick = () => mobileSelectIcon(obj.id);
+
+                grid.appendChild(div);
+            });
+        }
+
+        // 更新移动端对象列表
+        function updateMobileObjectList() {
+            const list = document.getElementById('mobileObjectList');
+            const count = document.getElementById('mobileObjectCount');
+            if (!list || !count) return;
+
+            count.textContent = state.objects.length;
+            list.innerHTML = '';
+            state.objects.forEach((obj, idx) => {
+                const div = document.createElement('div');
+                div.className = 'object-list-item' + (obj === state.selectedObject ? ' selected' : '');
+
+                let name = `#${idx + 1} `;
+                if (obj.id === 9) name += '圆形AOE';
+                else if (obj.id === 10) name += '扇形AOE';
+                else if (obj.id === 11) name += '矩形AOE';
+                else if (obj.id === 12) name += '线条';
+                else if (obj.id === 17) name += '圆环AOE';
+                else if (obj.id === 100) name += `文本: ${obj.string || ''}`;
+                else name += `图标 ${obj.id}`;
+
+                div.textContent = name;
+                div.onclick = () => {
+                    selectObject(obj);
+                    updateMobilePropsPanel();
+                };
+                list.appendChild(div);
+            });
+        }
+
+        // 更新移动端属性面板
+        function updateMobilePropsPanel() {
+            const obj = state.selectedObject;
+            const propsDiv = document.getElementById('mobileObjectProps');
+
+            if (!obj) {
+                if (propsDiv) propsDiv.style.display = 'none';
+                return;
+            }
+
+            if (propsDiv) propsDiv.style.display = 'block';
+
+            const propX = document.getElementById('mobilePropX');
+            const propY = document.getElementById('mobilePropY');
+            const propScale = document.getElementById('mobilePropScale');
+            const propAngle = document.getElementById('mobilePropAngle');
+            const propColor = document.getElementById('mobilePropColor');
+            const propAlpha = document.getElementById('mobilePropAlpha');
+            const alphaValue = document.getElementById('mobileAlphaValue');
+
+            if (propX) propX.value = obj.x;
+            if (propY) propY.value = obj.y;
+            if (propScale) propScale.value = obj.scale;
+            if (propAngle) propAngle.value = Math.round(obj.angle * 180 / Math.PI);
+
+            const color = '#' + [obj.red, obj.green, obj.blue].map(c =>
+                c.toString(16).padStart(2, '0')
+            ).join('');
+            if (propColor) propColor.value = color;
+            if (propAlpha) propAlpha.value = Math.round(obj.alpha * 100);
+            if (alphaValue) alphaValue.textContent = Math.round(obj.alpha * 100) + '%';
+
+            // AOE 参数
+            const aoeParams = document.getElementById('mobileAoeParams');
+            const textParams = document.getElementById('mobileTextParams');
+
+            if ([9, 10, 11, 17].includes(obj.id)) {
+                if (aoeParams) aoeParams.style.display = 'block';
+                if (textParams) textParams.style.display = 'none';
+                const propParam1 = document.getElementById('mobilePropParam1');
+                const propParam2 = document.getElementById('mobilePropParam2');
+                if (propParam1) propParam1.value = obj.param1;
+                if (propParam2) propParam2.value = obj.param2;
+            } else if (obj.id === 100) {
+                if (aoeParams) aoeParams.style.display = 'none';
+                if (textParams) textParams.style.display = 'block';
+                const propText = document.getElementById('mobilePropText');
+                if (propText) propText.value = obj.string || '';
+            } else {
+                if (aoeParams) aoeParams.style.display = 'none';
+                if (textParams) textParams.style.display = 'none';
+            }
+        }
+
+        // 从移动端属性面板更新对象
+        function updateSelectedFromMobileProps() {
+            const obj = state.selectedObject;
+            if (!obj) return;
+
+            const propX = document.getElementById('mobilePropX');
+            const propY = document.getElementById('mobilePropY');
+            const propScale = document.getElementById('mobilePropScale');
+            const propAngle = document.getElementById('mobilePropAngle');
+            const propColor = document.getElementById('mobilePropColor');
+            const propAlpha = document.getElementById('mobilePropAlpha');
+
+            if (propX) obj.x = parseInt(propX.value) || 0;
+            if (propY) obj.y = parseInt(propY.value) || 0;
+            if (propScale) obj.scale = parseInt(propScale.value) || 100;
+            if (propAngle) obj.angle = (parseInt(propAngle.value) || 0) * Math.PI / 180;
+
+            if (propColor) {
+                const color = propColor.value;
+                obj.red = parseInt(color.substr(1, 2), 16);
+                obj.green = parseInt(color.substr(3, 2), 16);
+                obj.blue = parseInt(color.substr(5, 2), 16);
+            }
+            if (propAlpha) obj.alpha = parseInt(propAlpha.value) / 100;
+
+            if ([9, 10, 11, 17].includes(obj.id)) {
+                const propParam1 = document.getElementById('mobilePropParam1');
+                const propParam2 = document.getElementById('mobilePropParam2');
+                if (propParam1) obj.param1 = parseInt(propParam1.value) || 0;
+                if (propParam2) obj.param2 = parseInt(propParam2.value) || 0;
+            }
+
+            if (obj.id === 100) {
+                const propText = document.getElementById('mobilePropText');
+                if (propText) obj.string = propText.value;
+            }
+
+            // 同步桌面版属性面板
+            updatePropsPanel();
+            render();
+        }
+
+        // 移动端导入
+        async function mobileImportBoard() {
+            const shareString = document.getElementById('mobileShareString').value.trim();
+            if (!shareString) {
+                showToast('请输入分享字符串');
+                return;
+            }
+            // 同步到桌面版并调用导入
+            document.getElementById('shareString').value = shareString;
+            await importBoard();
+            updateMobileObjectList();
+            closeMobileDrawer('props');
+        }
+
+        // 移动端导出
+        async function mobileExportBoard() {
+            // 同步名称
+            const mobileName = document.getElementById('mobileBoardName').value;
+            document.getElementById('boardName').value = mobileName;
+            await exportBoard();
+            // 同步到移动端
+            document.getElementById('mobileShareString').value = document.getElementById('shareString').value;
+        }
+
+        // 绑定移动端属性输入事件
+        function bindMobilePropsEvents() {
+            const inputs = ['mobilePropX', 'mobilePropY', 'mobilePropScale', 'mobilePropAngle',
+                           'mobilePropColor', 'mobilePropParam1', 'mobilePropParam2', 'mobilePropText'];
+            inputs.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.oninput = updateSelectedFromMobileProps;
+            });
+
+            const alphaInput = document.getElementById('mobilePropAlpha');
+            if (alphaInput) {
+                alphaInput.oninput = function() {
+                    const alphaValue = document.getElementById('mobileAlphaValue');
+                    if (alphaValue) alphaValue.textContent = this.value + '%';
+                    updateSelectedFromMobileProps();
+                };
+            }
+        }
+
+        // 监听窗口大小变化，更新移动端状态
+        window.addEventListener('resize', () => {
+            isMobile = window.innerWidth <= 768;
+        });
 
         // 检测是否为移动端并自动调整画布大小
         function adjustCanvasForMobile() {
-            const isMobile = window.innerWidth <= 768;
+            isMobile = window.innerWidth <= 768;
             if (isMobile) {
                 const wrapper = document.querySelector('.canvas-wrapper');
-                const maxWidth = wrapper.clientWidth - 20;
-                const scale = Math.min(1, maxWidth / 1024);
-                canvas.style.transform = `scale(${scale})`;
-                canvas.style.transformOrigin = 'top left';
+                if (!wrapper) return;
+
+                // 计算可用空间
+                const headerHeight = 50;  // 标题栏高度
+                const quickToolsHeight = 50;  // 快捷工具栏
+                const navHeight = 60;  // 底部导航
+                const padding = 20;  // 上下padding
+
+                const availableWidth = window.innerWidth - 16;
+                const availableHeight = window.innerHeight - headerHeight - quickToolsHeight - navHeight - padding;
+
+                // 计算保持宽高比的最佳尺寸
+                const aspectRatio = 1024 / 768;
+                let newWidth = availableWidth;
+                let newHeight = newWidth / aspectRatio;
+
+                // 如果高度超出可用空间，按高度计算
+                if (newHeight > availableHeight) {
+                    newHeight = availableHeight;
+                    newWidth = newHeight * aspectRatio;
+                }
+
+                // 确保最小尺寸
+                newWidth = Math.max(newWidth, 300);
+                newHeight = Math.max(newHeight, 225);
+
+                // 设置画布显示尺寸（CSS尺寸）
+                canvas.style.width = Math.floor(newWidth) + 'px';
+                canvas.style.height = Math.floor(newHeight) + 'px';
+                canvas.style.transform = '';
             } else {
+                canvas.style.width = '';
+                canvas.style.height = '';
                 canvas.style.transform = '';
             }
         }
@@ -1015,6 +1588,7 @@
                 path: `/background/${id}.webp`
             }));
             renderBackgrounds(backgrounds);
+            renderMobileBackgrounds(backgrounds);  // 移动端
 
             // 生成对象列表
             const objects = OBJECTS.map(id => ({
@@ -1025,18 +1599,20 @@
             state.availableObjects = objects;
             objects.forEach(o => state.scaleFactor[o.id] = o.scale_factor);
             renderObjects(objects);
+            renderMobileObjects(objects);  // 移动端
 
             // 加载默认背景
             loadBackground(1);
 
             // 绑定事件
             bindEvents();
+            bindMobilePropsEvents();  // 移动端属性事件
 
             // 初始渲染
             render();
 
-            // 调整移动端画布
-            adjustCanvasForMobile();
+            // 调整移动端画布（延迟执行确保 DOM 完全渲染）
+            setTimeout(adjustCanvasForMobile, 100);
         }
 
         function renderBackgrounds(backgrounds) {
@@ -1200,6 +1776,11 @@
             document.querySelectorAll('.object-item').forEach(el => el.classList.remove('selected'));
             const selectBtn = document.querySelector('.special-btn[data-tool="select"]');
             if (selectBtn) selectBtn.classList.add('active');
+
+            // 更新移动端快捷工具栏
+            document.querySelectorAll('.mobile-quick-tool-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.tool === 'select');
+            });
         }
 
         function onMouseDown(e) {
@@ -1252,6 +1833,7 @@
                 });
                 // 自动切换到选择模式
                 switchToSelectTool();
+                hidePlacementHint();  // 隐藏放置提示
             } else if (['circle', 'fan', 'donut', 'rect', 'line'].includes(state.currentTool)) {
                 // 开始绘制
                 saveHistory();
@@ -1424,6 +2006,11 @@
 
         function onTouchStart(e) {
             e.preventDefault();
+
+            // 关闭所有抽屉
+            closeMobileDrawer('tool');
+            closeMobileDrawer('props');
+
             const pos = getTouchPos(e);
 
             // 模拟鼠标事件
@@ -1479,6 +2066,7 @@
                     param1: 0, param2: 0, param3: 0
                 });
                 switchToSelectTool();
+                hidePlacementHint();  // 隐藏放置提示
             } else if (['circle', 'fan', 'donut', 'rect', 'line'].includes(state.currentTool)) {
                 saveHistory();
                 state.isDrawing = true;
@@ -1756,6 +2344,7 @@
             state.selectedObject = obj;
             document.getElementById('objectProps').style.display = 'block';
             updatePropsPanel();
+            updateMobilePropsPanel();  // 移动端
             updateObjectList();
             render();
         }
@@ -1763,6 +2352,8 @@
         function deselectObject() {
             state.selectedObject = null;
             document.getElementById('objectProps').style.display = 'none';
+            const mobileProps = document.getElementById('mobileObjectProps');
+            if (mobileProps) mobileProps.style.display = 'none';
             updateObjectList();
             render();
         }
@@ -1867,6 +2458,9 @@
                 div.onclick = () => selectObject(obj);
                 list.appendChild(div);
             });
+
+            // 同时更新移动端对象列表
+            updateMobileObjectList();
         }
 
         // ==================== 渲染 ====================
